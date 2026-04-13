@@ -61,22 +61,32 @@ foreach ($asset in $asset_ids) {
 $regex_parts = $asset_ids | ForEach-Object { "(?<![a-zA-Z0-9])0*" + [regex]::Escape($_) + "(?![a-zA-Z0-9])" }
 $regex_pattern = $regex_parts -join '|'
 
-# Get-ChildItem ira varrer o disco apenas uma unica vez
-# Usamos o pipeline para nao sobrecarregar a memoria guardando tudo de uma vez
-Get-ChildItem -Path $source_drive -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object {
-    
-    # Se o nome do arquivo der match em ALGUM dos nossos IDs, processamos
-    if ($_.Name -match $regex_pattern) {
-        $file_name = $_.Name
-        $file_path = $_.FullName
+# USAMOS CMD NATIVO (DIR + FINDSTR) PARA LER DISCOS DE TERABYTES MUITO MAIS RAPIDO
+Write-Host "Aguarde... Realizando pre-filtro nativo de alta performance pelo Sistema Operacional..." -ForegroundColor DarkGray
+
+# Criar string de busca para o findstr ex: "123 456 789"
+$asset_search_string = $asset_ids -join ' '
+
+# dir /s /b /a-d puxa todos os caminhos. O findstr pega isso e filtra instantaneamente ignorando 99% do lixo
+$command = "cmd.exe /c `"dir /s /b /a-d `"$source_drive*`" 2>nul | findstr /i `"$asset_search_string`"`""
+
+$fast_results = Invoke-Expression $command
+
+if ($null -ne $fast_results) {
+    foreach ($file_path in $fast_results) {
+        # O DIR retorna apenas o texto do caminho completo. Separamos apenas o nome final para o teste de trava
+        $file_name = Split-Path $file_path -Leaf
         
         # Testamos especificamente para saber de qual ID ele pertence e anexar ao relatorio
         foreach ($asset in $asset_ids) {
             # Confirma match exato isolado para este ID especifico, sem letras encostadas
             $individual_pattern = "(?<![a-zA-Z0-9])0*" + [regex]::Escape($asset) + "(?![a-zA-Z0-9])"
             if ($file_name -match $individual_pattern) {
-                $encontrados[$asset] += $file_path
-                Write-Host " -> ACHEI ($asset)! Caminho: $file_path" -ForegroundColor Green
+                # Evita duplicatas caso o findstr puxe mais de uma vez
+                if (-not ($encontrados[$asset] -contains $file_path)) {
+                    $encontrados[$asset] += $file_path
+                    Write-Host " -> ACHEI ($asset)! Caminho: $file_path" -ForegroundColor Green
+                }
             }
         }
     }
