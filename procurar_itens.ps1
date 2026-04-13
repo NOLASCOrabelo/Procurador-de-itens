@@ -61,33 +61,34 @@ foreach ($asset in $asset_ids) {
 $regex_parts = $asset_ids | ForEach-Object { "(?<![a-zA-Z0-9])0*" + [regex]::Escape($_) + "(?![a-zA-Z0-9])" }
 $regex_pattern = $regex_parts -join '|'
 
-# USAMOS CMD NATIVO (DIR + FINDSTR) PARA LER DISCOS DE TERABYTES MUITO MAIS RAPIDO
-Write-Host "Aguarde... Realizando pre-filtro nativo de alta performance pelo Sistema Operacional..." -ForegroundColor DarkGray
+# USAMOS CMD NATIVO PARA LER DISCOS GIGANTES MUITO MAIS RAPIDO EVITANDO LIMITES DE TEXTO
+Write-Host "Aguarde... Lendo a arvore de diretorios do disco nativamente..." -ForegroundColor DarkGray
 
-# Criar string de busca para o findstr ex: "123 456 789"
-$asset_search_string = $asset_ids -join ' '
-
-# dir /s /b /a-d puxa todos os caminhos. O findstr pega isso e filtra instantaneamente ignorando 99% do lixo
-$command = "cmd.exe /c `"dir /s /b /a-d `"$source_drive*`" 2>nul | findstr /i `"$asset_search_string`"`""
-
-$fast_results = Invoke-Expression $command
-
-if ($null -ne $fast_results) {
-    foreach ($file_path in $fast_results) {
-        # O DIR retorna apenas o texto do caminho completo. Separamos apenas o nome final para o teste de trava
-        $file_name = Split-Path $file_path -Leaf
+# dir /s /b /a-d puxa todos os caminhos no CMD sem sobrecarregar a memoria.
+# O PowerShell captura e checa as strings em alta velocidade no pipeline
+cmd.exe /c "dir /s /b /a-d `"$source_drive*`" 2>nul" | ForEach-Object {
+    $file_path = $_
+    
+    # Pre-filtro muito rapido: ve se o caminho de texto puramente contem algum arquivo de interesse
+    if ($file_path -match $regex_pattern) {
         
-        # Testamos especificamente para saber de qual ID ele pertence e anexar ao relatorio
-        foreach ($asset in $asset_ids) {
-            # Confirma match exato isolado para este ID especifico, sem letras encostadas
-            $individual_pattern = "(?<![a-zA-Z0-9])0*" + [regex]::Escape($asset) + "(?![a-zA-Z0-9])"
-            if ($file_name -match $individual_pattern) {
-                # Evita duplicatas caso o findstr puxe mais de uma vez
-                if (-not ($encontrados[$asset] -contains $file_path)) {
-                    $encontrados[$asset] += $file_path
-                    Write-Host " -> ACHEI ($asset)! Caminho: $file_path" -ForegroundColor Green
+        try {
+            $file_name = Split-Path $file_path -Leaf
+            
+            # Testamos a trava de exatidao forte no nome
+            foreach ($asset in $asset_ids) {
+                $individual_pattern = "(?<![a-zA-Z0-9])0*" + [regex]::Escape($asset) + "(?![a-zA-Z0-9])"
+                
+                if ($file_name -match $individual_pattern) {
+                    # Evita duplicatas na apuracao
+                    if (-not ($encontrados[$asset] -contains $file_path)) {
+                        $encontrados[$asset] += $file_path
+                        Write-Host " -> ACHEI ($asset)! Caminho: $file_path" -ForegroundColor Green
+                    }
                 }
             }
+        } catch {
+            # Ignora paths temporarios mal formatados pelo sistema operacional
         }
     }
 }
