@@ -55,10 +55,10 @@ foreach ($asset in $asset_ids) {
 }
 
 # Criamos uma expressao regular que checa todos os IDs buscando o numero exato
-# (?<!\d)  -> garante que não tem outro dígito ANTES
-# 0*       -> aceita qualquer quantidade de zeros à esquerda reais no arquivo (ex: 00123)
-# (?!\d)   -> garante que não tem outro dígito DEPOIS
-$regex_parts = $asset_ids | ForEach-Object { "(?<!\d)0*" + [regex]::Escape($_) + "(?!\d)" }
+# (?<![a-zA-Z0-9]) -> garante que não tem NENHUMA letra nem dígito ANTES (ex: evita e459206)
+# 0*               -> aceita qualquer quantidade de zeros à esquerda reais no arquivo (ex: 00123)
+# (?![a-zA-Z0-9])  -> garante que não tem NENHUMA letra nem dígito DEPOIS
+$regex_parts = $asset_ids | ForEach-Object { "(?<![a-zA-Z0-9])0*" + [regex]::Escape($_) + "(?![a-zA-Z0-9])" }
 $regex_pattern = $regex_parts -join '|'
 
 # Get-ChildItem ira varrer o disco apenas uma unica vez
@@ -72,8 +72,8 @@ Get-ChildItem -Path $source_drive -Recurse -File -ErrorAction SilentlyContinue |
         
         # Testamos especificamente para saber de qual ID ele pertence e anexar ao relatorio
         foreach ($asset in $asset_ids) {
-            # Confirma match exato isolado para este ID especifico
-            $individual_pattern = "(?<!\d)0*" + [regex]::Escape($asset) + "(?!\d)"
+            # Confirma match exato isolado para este ID especifico, sem letras encostadas
+            $individual_pattern = "(?<![a-zA-Z0-9])0*" + [regex]::Escape($asset) + "(?![a-zA-Z0-9])"
             if ($file_name -match $individual_pattern) {
                 $encontrados[$asset] += $file_path
                 Write-Host " -> ACHEI ($asset)! Caminho: $file_path" -ForegroundColor Green
