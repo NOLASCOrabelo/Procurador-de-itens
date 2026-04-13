@@ -9,7 +9,13 @@ if ([string]::IsNullOrWhiteSpace($asset_ids_str)) {
 }
 
 # Transformar a string recebida num array dividindo por virgula ou espaco e removendo vazios
-$asset_ids = $asset_ids_str -split '[, ]+' | Where-Object { $_ -ne '' }
+$asset_ids_raw = $asset_ids_str -split '[, ]+' | Where-Object { $_ -ne '' }
+
+# Remover zeros à esquerda (ex: 0123 ou 00123 vira 123) para a base da pesquisa
+$asset_ids = $asset_ids_raw | ForEach-Object {
+    $val = $_ -replace '^0+', ''
+    if ($val -eq '') { '0' } else { $val }
+} | Select-Object -Unique
 
 if ($asset_ids.Count -eq 0) {
     Write-Host "Nenhum ID valido fornecido. Encerrando." -ForegroundColor Red
@@ -48,8 +54,12 @@ foreach ($asset in $asset_ids) {
     $encontrados[$asset] = @()
 }
 
-# Criamos uma expressao regular que checa todos os IDs de uma vez só: Ex: (ID1|ID2|ID3)
-$regex_pattern = ($asset_ids | ForEach-Object { [regex]::Escape($_) }) -join '|'
+# Criamos uma expressao regular que checa todos os IDs buscando o numero exato
+# (?<!\d)  -> garante que não tem outro dígito ANTES
+# 0*       -> aceita qualquer quantidade de zeros à esquerda reais no arquivo (ex: 00123)
+# (?!\d)   -> garante que não tem outro dígito DEPOIS
+$regex_parts = $asset_ids | ForEach-Object { "(?<!\d)0*" + [regex]::Escape($_) + "(?!\d)" }
+$regex_pattern = $regex_parts -join '|'
 
 # Get-ChildItem ira varrer o disco apenas uma unica vez
 # Usamos o pipeline para nao sobrecarregar a memoria guardando tudo de uma vez
@@ -62,8 +72,9 @@ Get-ChildItem -Path $source_drive -Recurse -File -ErrorAction SilentlyContinue |
         
         # Testamos especificamente para saber de qual ID ele pertence e anexar ao relatorio
         foreach ($asset in $asset_ids) {
-            # Usando base match case-insensitive
-            if ($file_name.ToLower().Contains($asset.ToLower())) {
+            # Confirma match exato isolado para este ID especifico
+            $individual_pattern = "(?<!\d)0*" + [regex]::Escape($asset) + "(?!\d)"
+            if ($file_name -match $individual_pattern) {
                 $encontrados[$asset] += $file_path
                 Write-Host " -> ACHEI ($asset)! Caminho: $file_path" -ForegroundColor Green
             }
