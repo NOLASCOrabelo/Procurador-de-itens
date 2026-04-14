@@ -24,29 +24,46 @@ if ($asset_ids.Count -eq 0) {
 
 Write-Host "Asset IDs a procurar: $($asset_ids -join ', ')" -ForegroundColor Yellow
 
-# 2. Obter o disco de busca
-$drive_input = Read-Host "Digite a letra do disco que deseja varrer inteiramente (ex: C ou D)"
+# 2. Obter o local de busca
+Write-Host "`nOnde voce deseja procurar os Assets?" -ForegroundColor Cyan
+Write-Host "[1] Em um Disco Inteiro (Muito demorado em discos gigantes)"
+Write-Host "[2] Em uma Pasta/Diretorio Especifico (Rapido e recomendado)"
+$opcao = Read-Host "Escolha sua opcao (1 ou 2)"
 
-# Formatar a entrada do usuario corretamente para o padrao (ex: de "c", "c:" ou "C:\" para "C:\")
-if ($drive_input -match '^[a-zA-Z]$') {
-    $source_drive = $drive_input + ":\"
+if ($opcao -eq '1') {
+    $drive_input = Read-Host "Digite a letra do disco (ex: C ou Y)"
+    if ($drive_input -match '^[a-zA-Z]$') {
+        $source_path = $drive_input + ":\"
+    }
+    elseif ($drive_input -match '^[a-zA-Z]:\\?$') {
+        $source_path = $drive_input.Substring(0, 1) + ":\"
+    }
+    else {
+        Write-Host "Entrada de disco invalida. Encerrando." -ForegroundColor Red
+        exit
+    }
 }
-elseif ($drive_input -match '^[a-zA-Z]:\\?$') {
-    $source_drive = $drive_input.Substring(0, 1) + ":\"
+elseif ($opcao -eq '2') {
+    $source_path = Read-Host "Digite o caminho completo da pasta (ex: Y:\EDICAO TV CAMARA)"
 }
 else {
-    Write-Host "Entrada de disco invalida. Use apenas a letra, como C ou D. Encerrando." -ForegroundColor Red
+    Write-Host "Opcao invalida. Encerrando." -ForegroundColor Red
     exit
 }
 
-if (-Not (Test-Path -Path $source_drive)) {
-    Write-Host "Erro: O disco '$source_drive' nao e valido ou nao esta acessivel." -ForegroundColor Red
+if (-Not (Test-Path -Path $source_path)) {
+    Write-Host "Erro: O caminho '$source_path' nao existe ou nao esta acessivel." -ForegroundColor Red
     exit
+}
+
+# Evita erros de pathing do CMD garantindo barra no fim
+if (-not $source_path.EndsWith('\')) {
+    $source_path += "\"
 }
 
 # 3. Realizar a busca no disco inteiro (OTIMIZADO)
-Write-Host "`nIniciando a varredura OTIMIZADA no disco $source_drive..." -ForegroundColor Cyan
-Write-Host "(Desta vez o script fara uma UNICA leitura de arvore para todos os itens, gastando muito menos memoria e prevenindo travamentos em discos dificeis como rede/mapeamentos)`n" -ForegroundColor Yellow
+Write-Host "`nIniciando a varredura OTIMIZADA em $source_path ..." -ForegroundColor Cyan
+Write-Host "(Processando arquivos nativamente, aguarde...)`n" -ForegroundColor Yellow
 
 # Dicionario para armazenar os caminhos onde cada asset foi encontrado
 $encontrados = @{}
@@ -66,7 +83,7 @@ Write-Host "Aguarde... Lendo a arvore de diretorios do disco nativamente..." -Fo
 
 # dir /s /b /a-d puxa todos os caminhos no CMD sem sobrecarregar a memoria.
 # O PowerShell captura e checa as strings em alta velocidade no pipeline
-cmd.exe /c "dir /s /b /a-d `"$source_drive*`" 2>nul" | ForEach-Object {
+cmd.exe /c "dir /s /b /a-d `"$source_path*`" 2>nul" | ForEach-Object {
     $file_path = $_
     
     # Pre-filtro muito rapido: ve se o caminho de texto puramente contem algum arquivo de interesse
@@ -87,7 +104,8 @@ cmd.exe /c "dir /s /b /a-d `"$source_drive*`" 2>nul" | ForEach-Object {
                     }
                 }
             }
-        } catch {
+        }
+        catch {
             # Ignora paths temporarios mal formatados pelo sistema operacional
         }
     }
@@ -105,7 +123,7 @@ foreach ($asset in $asset_ids) {
         Write-Host "[OK] '$asset': Encontrado em $quantidade_encontrada local(is)." -ForegroundColor Green
     }
     else {
-        Write-Host "[X] '$asset': NAO ENCONTRADO em lugar nenhum no disco $source_drive." -ForegroundColor Red
+        Write-Host "[X] '$asset': NAO ENCONTRADO em lugar nenhum em $source_path" -ForegroundColor Red
         $num_faltando++
     }
 }
