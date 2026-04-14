@@ -1,136 +1,95 @@
-Write-Host "--- Verificador de Itens (Asset IDs) ---" -ForegroundColor Cyan
+Write-Host "--- Procurador de Itens por Número no Título ---" -ForegroundColor Cyan
 
-# 1. Obter os Asset IDs
-$asset_ids_str = Read-Host "Digite os Asset IDs que deseja procurar (separados por virgula ou espaco)"
+# 1. Obter os números
+$numeros_str = Read-Host "Digite os números que deseja procurar (separados por vírgula ou espaço)"
 
-if ([string]::IsNullOrWhiteSpace($asset_ids_str)) {
-    Write-Host "Nenhum Asset ID fornecido. Encerrando." -ForegroundColor Red
+if ([string]::IsNullOrWhiteSpace($numeros_str)) {
+    Write-Host "AVISO: Nenhum número fornecido. Encerrando." -ForegroundColor Red
     exit
 }
 
-# Transformar a string recebida num array dividindo por virgula ou espaco e removendo vazios
-$asset_ids_raw = $asset_ids_str -split '[, ]+' | Where-Object { $_ -ne '' }
+# Extrair apenas coisas que são números rigorosamente
+$numeros = $numeros_str -split '[, ]+' | Where-Object { $_ -match '^\d+$' } | Select-Object -Unique
 
-# Remover zeros à esquerda (ex: 0123 ou 00123 vira 123) para a base da pesquisa
-$asset_ids = $asset_ids_raw | ForEach-Object {
-    $val = $_ -replace '^0+', ''
-    if ($val -eq '') { '0' } else { $val }
-} | Select-Object -Unique
-
-if ($asset_ids.Count -eq 0) {
-    Write-Host "Nenhum ID valido fornecido. Encerrando." -ForegroundColor Red
+if ($numeros.Count -eq 0) {
+    Write-Host "AVISO: Nenhum número válido foi identificado na sua entrada. Use apenas caracteres numéricos. Encerrando." -ForegroundColor Red
     exit
 }
 
-Write-Host "Asset IDs a procurar: $($asset_ids -join ', ')" -ForegroundColor Yellow
+Write-Host "Números a procurar: $($numeros -join ', ')" -ForegroundColor Yellow
 
 # 2. Obter o local de busca
-Write-Host "`nOnde voce deseja procurar os Assets?" -ForegroundColor Cyan
-Write-Host "[1] Em um Disco Inteiro (Muito demorado em discos gigantes)"
-Write-Host "[2] Em uma Pasta/Diretorio Especifico (Rapido e recomendado)"
-$opcao = Read-Host "Escolha sua opcao (1 ou 2)"
-
-if ($opcao -eq '1') {
-    $drive_input = Read-Host "Digite a letra do disco (ex: C ou Y)"
-    if ($drive_input -match '^[a-zA-Z]$') {
-        $source_path = $drive_input + ":\"
-    }
-    elseif ($drive_input -match '^[a-zA-Z]:\\?$') {
-        $source_path = $drive_input.Substring(0, 1) + ":\"
-    }
-    else {
-        Write-Host "Entrada de disco invalida. Encerrando." -ForegroundColor Red
-        exit
-    }
-}
-elseif ($opcao -eq '2') {
-    $source_path = Read-Host "Digite o caminho completo da pasta (ex: Y:\EDICAO TV CAMARA)"
-}
-else {
-    Write-Host "Opcao invalida. Encerrando." -ForegroundColor Red
-    exit
-}
+$source_path = Read-Host "Digite o caminho completo da pasta ou disco onde deseja procurar (Ex: C:\ ou Y:\Pasta)"
 
 if (-Not (Test-Path -Path $source_path)) {
-    Write-Host "Erro: O caminho '$source_path' nao existe ou nao esta acessivel." -ForegroundColor Red
+    Write-Host "AVISO: O caminho '$source_path' não existe ou não está acessível." -ForegroundColor Red
     exit
 }
 
-# Evita erros de pathing do CMD garantindo barra no fim
+# Garante barra no final para evitar falhas no CMD do Windows
 if (-not $source_path.EndsWith('\')) {
     $source_path += "\"
 }
 
-# 3. Realizar a busca no disco inteiro (OTIMIZADO)
-Write-Host "`nIniciando a varredura OTIMIZADA em $source_path ..." -ForegroundColor Cyan
-Write-Host "(Processando arquivos nativamente, aguarde...)`n" -ForegroundColor Yellow
+# 3. Varredura
+Write-Host "`nIniciando a busca em $source_path ..." -ForegroundColor Cyan
+Write-Host "Este processo buscará os números APENAS nos TÍTULOS dos arquivos e pastas." -ForegroundColor Yellow
+Write-Host "Extensões serão ignoradas!" -ForegroundColor Yellow
 
-# Dicionario para armazenar os caminhos onde cada asset foi encontrado
 $encontrados = @{}
-foreach ($asset in $asset_ids) {
-    $encontrados[$asset] = @()
+foreach ($num in $numeros) {
+    $encontrados[$num] = @()
 }
 
-# Criamos uma expressao regular que checa todos os IDs buscando o numero exato
-# (?<![a-zA-Z0-9]) -> garante que não tem NENHUMA letra nem dígito ANTES (ex: evita e459206)
-# 0*               -> aceita qualquer quantidade de zeros à esquerda reais no arquivo (ex: 00123)
-# (?![a-zA-Z0-9])  -> garante que não tem NENHUMA letra nem dígito DEPOIS
-$regex_parts = $asset_ids | ForEach-Object { "(?<![a-zA-Z0-9])0*" + [regex]::Escape($_) + "(?![a-zA-Z0-9])" }
-$regex_pattern = $regex_parts -join '|'
+$counter = 0
 
-# USAMOS CMD NATIVO PARA LER DISCOS GIGANTES MUITO MAIS RAPIDO EVITANDO LIMITES DE TEXTO
-Write-Host "Aguarde... Lendo a arvore de diretorios do disco nativamente..." -ForegroundColor DarkGray
-
-# dir /s /b /a-d puxa todos os caminhos no CMD sem sobrecarregar a memoria.
-# O PowerShell captura e checa as strings em alta velocidade no pipeline
-cmd.exe /c "dir /s /b /a-d `"$source_path*`" 2>nul" | ForEach-Object {
+# Usamos dir /s /b nativamente por ser imensamente mais rápido que o Get-ChildItem para discos inteiros/grandes volumes.
+# Retorna todos os caminhos (arquivos e pastas).
+cmd.exe /c "dir /s /b `"$source_path*`" 2>nul" | ForEach-Object {
     $file_path = $_
+    $counter++
     
-    # Pre-filtro muito rapido: ve se o caminho de texto puramente contem algum arquivo de interesse
-    if ($file_path -match $regex_pattern) {
-        
-        try {
-            $file_name = Split-Path $file_path -Leaf
-            
-            # Testamos a trava de exatidao forte no nome
-            foreach ($asset in $asset_ids) {
-                $individual_pattern = "(?<![a-zA-Z0-9])0*" + [regex]::Escape($asset) + "(?![a-zA-Z0-9])"
+    # PROGRESSO: Aviso para o usuário ver que não travou
+    if ($counter % 2000 -eq 0) {
+        Write-Host "PROGRESSO: Processando... $counter itens verificados até agora." -ForegroundColor DarkGray
+    }
+
+    try {
+        # Pega apenas o nome do arquivo, removendo a extensão. Isso atende ao pedido de não verificar a extensão.
+        $title_only = [System.IO.Path]::GetFileNameWithoutExtension($file_path)
+
+        foreach ($num in $numeros) {
+            # Verifica se o número informado pelo usuário está contido APENAS no título
+            if ($title_only.Contains($num)) {
                 
-                if ($file_name -match $individual_pattern) {
-                    # Evita duplicatas na apuracao
-                    if (-not ($encontrados[$asset] -contains $file_path)) {
-                        $encontrados[$asset] += $file_path
-                        Write-Host " -> ACHEI ($asset)! Caminho: $file_path" -ForegroundColor Green
-                    }
+                # Evitar mostrar itens duplicados caso ocorra repasses
+                if (-not ($encontrados[$num] -contains $file_path)) {
+                    $encontrados[$num] += $file_path
+                    
+                    # SUCESSO OCORRIDO AGORA:
+                    Write-Host " -> SUCESSO! Encontrei o número '$num' neste título!" -ForegroundColor Green
+                    Write-Host "    Caminho: $file_path" -ForegroundColor Green
                 }
             }
         }
-        catch {
-            # Ignora paths temporarios mal formatados pelo sistema operacional
-        }
+    }
+    catch {
+        # Ignora arquivos inválidos corrompidos ou erros de split para não parar a pesquisa
     }
 }
 
-# 4. Resumo Final da Verificacao
-Write-Host "`n--- Relatorio Resumo da Verificacao ---" -ForegroundColor Cyan
+Write-Host "`n=== Busca concluída! Total de itens escaneados: $counter ===" -ForegroundColor Cyan
 
-$num_faltando = 0
+# 4. Resumo Final (Avisos de Certo / Não Certo)
+Write-Host "`n--- RESULTADO FINAL ---" -ForegroundColor Cyan
 
-foreach ($asset in $asset_ids) {
-    $quantidade_encontrada = $encontrados[$asset].Count
-    
-    if ($quantidade_encontrada -gt 0) {
-        Write-Host "[OK] '$asset': Encontrado em $quantidade_encontrada local(is)." -ForegroundColor Green
+foreach ($num in $numeros) {
+    $qdt = $encontrados[$num].Count
+    if ($qdt -gt 0) {
+        # QUANDO DER CERTO
+        Write-Host "SUCESSO: O número '$num' foi encontrado em $qdt item(ns)." -ForegroundColor Green
+    } else {
+        # QUANDO NÃO DER CERTO / NÃO ENCONTRAR
+        Write-Host "NÃO ENCONTRADO: O número '$num' NÃO foi achado em lugar nenhum nesta pasta." -ForegroundColor Red
     }
-    else {
-        Write-Host "[X] '$asset': NAO ENCONTRADO em lugar nenhum em $source_path" -ForegroundColor Red
-        $num_faltando++
-    }
-}
-
-if ($num_faltando -eq 0) {
-    Write-Host "`n=== Sucesso: TODOS os itens procurados existem no disco! ===" -ForegroundColor Green
-}
-else {
-    Write-Host "`n=== Atencao: $num_faltando item(ns) NÃO foram achados neste disco. ===" -ForegroundColor Yellow
 }
