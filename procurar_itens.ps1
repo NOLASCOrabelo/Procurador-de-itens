@@ -1,7 +1,7 @@
-Write-Host "--- Procurador de Itens por Número no Título ---" -ForegroundColor Cyan
+Write-Host "--- Procurador de Itens por Texto no Título ---" -ForegroundColor Cyan
 
 # 1. Obter os termos
-$termos_str = Read-Host "Digite os números que deseja procurar (separados por vírgula ou espaço)"
+$termos_str = Read-Host "Digite os termos que deseja procurar (separados por vírgula ou espaço)"
 
 if ([string]::IsNullOrWhiteSpace($termos_str)) {
     Write-Host "AVISO: Nenhum termo fornecido. Encerrando." -ForegroundColor Red
@@ -16,7 +16,7 @@ if ($termos.Count -eq 0) {
     exit
 }
 
-Write-Host "Números a procurar: $($termos -join ', ')" -ForegroundColor Yellow
+Write-Host "Termos a procurar: $($termos -join ', ')" -ForegroundColor Yellow
 
 # 2. Obter o local de busca
 $source_path = Read-Host "Digite o caminho completo da pasta ou disco onde deseja procurar (Ex: C:\ ou Y:\Pasta)"
@@ -33,7 +33,7 @@ if (-not $source_path.EndsWith('\')) {
 
 # 3. Varredura
 Write-Host "`nIniciando a busca em $source_path ..." -ForegroundColor Cyan
-Write-Host "Este processo buscará os números APENAS nos TÍTULOS dos arquivos e pastas." -ForegroundColor Yellow
+Write-Host "Este processo buscará os termos APENAS nos TÍTULOS dos arquivos e pastas." -ForegroundColor Yellow
 Write-Host "Extensões serão ignoradas!" -ForegroundColor Yellow
 
 $encontrados = @{}
@@ -59,7 +59,7 @@ cmd.exe /c "dir /s /b `"$source_path*`" 2>nul" | ForEach-Object {
         $title_only = [System.IO.Path]::GetFileNameWithoutExtension($file_path)
 
         foreach ($termo in $termos) {
-            # Verifica se o número informado pelo usuário está contido APENAS no título
+            # Verifica se o termo informado pelo usuário está contido APENAS no título
             if ($title_only.ToLower().Contains($termo.ToLower())) {
                 
                 # Evitar mostrar itens duplicados caso ocorra repasses
@@ -67,7 +67,7 @@ cmd.exe /c "dir /s /b `"$source_path*`" 2>nul" | ForEach-Object {
                     $encontrados[$termo] += $file_path
                     
                     # SUCESSO OCORRIDO AGORA:
-                    Write-Host " -> SUCESSO! Encontrei o número '$termo' neste título!" -ForegroundColor Green
+                    Write-Host " -> SUCESSO! Encontrei o termo '$termo' neste título!" -ForegroundColor Green
                     Write-Host "    Caminho: $file_path" -ForegroundColor Green
                 }
             }
@@ -87,9 +87,9 @@ foreach ($termo in $termos) {
     $qdt = $encontrados[$termo].Count
     if ($qdt -gt 0) {
         # QUANDO DER CERTO
-        Write-Host "SUCESSO: O número '$termo' foi encontrado em $qdt item(ns)." -ForegroundColor Green
+        Write-Host "SUCESSO: O termo '$termo' foi encontrado em $qdt item(ns)." -ForegroundColor Green
     } else {
         # QUANDO NÃO DER CERTO / NÃO ENCONTRAR
-        Write-Host "NÃO ENCONTRADO: O número '$termo' NÃO foi achado em lugar nenhum nesta pasta." -ForegroundColor Red
+        Write-Host "NÃO ENCONTRADO: O termo '$termo' NÃO foi achado em lugar nenhum nesta pasta." -ForegroundColor Red
     }
 }
