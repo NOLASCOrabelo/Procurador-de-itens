@@ -1,22 +1,22 @@
 Write-Host "--- Procurador de Itens por Número no Título ---" -ForegroundColor Cyan
 
-# 1. Obter os números
-$numeros_str = Read-Host "Digite os números que deseja procurar (separados por vírgula ou espaço)"
+# 1. Obter os termos
+$termos_str = Read-Host "Digite os números que deseja procurar (separados por vírgula ou espaço)"
 
-if ([string]::IsNullOrWhiteSpace($numeros_str)) {
-    Write-Host "AVISO: Nenhum número fornecido. Encerrando." -ForegroundColor Red
+if ([string]::IsNullOrWhiteSpace($termos_str)) {
+    Write-Host "AVISO: Nenhum termo fornecido. Encerrando." -ForegroundColor Red
     exit
 }
 
-# Extrair apenas coisas que são números rigorosamente
-$numeros = $numeros_str -split '[, ]+' | Where-Object { $_ -match '^\d+$' } | Select-Object -Unique
+# Extrair termos, remover espaços em branco e duplicatas
+$termos = $termos_str -split '[, ]+' | ForEach-Object { $_.Trim() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique
 
-if ($numeros.Count -eq 0) {
-    Write-Host "AVISO: Nenhum número válido foi identificado na sua entrada. Use apenas caracteres numéricos. Encerrando." -ForegroundColor Red
+if ($termos.Count -eq 0) {
+    Write-Host "AVISO: Nenhum termo válido foi identificado. Encerrando." -ForegroundColor Red
     exit
 }
 
-Write-Host "Números a procurar: $($numeros -join ', ')" -ForegroundColor Yellow
+Write-Host "Números a procurar: $($termos -join ', ')" -ForegroundColor Yellow
 
 # 2. Obter o local de busca
 $source_path = Read-Host "Digite o caminho completo da pasta ou disco onde deseja procurar (Ex: C:\ ou Y:\Pasta)"
@@ -37,8 +37,8 @@ Write-Host "Este processo buscará os números APENAS nos TÍTULOS dos arquivos 
 Write-Host "Extensões serão ignoradas!" -ForegroundColor Yellow
 
 $encontrados = @{}
-foreach ($num in $numeros) {
-    $encontrados[$num] = @()
+foreach ($termo in $termos) {
+    $encontrados[$termo] = @()
 }
 
 $counter = 0
@@ -58,16 +58,16 @@ cmd.exe /c "dir /s /b `"$source_path*`" 2>nul" | ForEach-Object {
         # Pega apenas o nome do arquivo, removendo a extensão. Isso atende ao pedido de não verificar a extensão.
         $title_only = [System.IO.Path]::GetFileNameWithoutExtension($file_path)
 
-        foreach ($num in $numeros) {
+        foreach ($termo in $termos) {
             # Verifica se o número informado pelo usuário está contido APENAS no título
-            if ($title_only.Contains($num)) {
+            if ($title_only.ToLower().Contains($termo.ToLower())) {
                 
                 # Evitar mostrar itens duplicados caso ocorra repasses
-                if (-not ($encontrados[$num] -contains $file_path)) {
-                    $encontrados[$num] += $file_path
+                if (-not ($encontrados[$termo] -contains $file_path)) {
+                    $encontrados[$termo] += $file_path
                     
                     # SUCESSO OCORRIDO AGORA:
-                    Write-Host " -> SUCESSO! Encontrei o número '$num' neste título!" -ForegroundColor Green
+                    Write-Host " -> SUCESSO! Encontrei o número '$termo' neste título!" -ForegroundColor Green
                     Write-Host "    Caminho: $file_path" -ForegroundColor Green
                 }
             }
@@ -83,13 +83,13 @@ Write-Host "`n=== Busca concluída! Total de itens escaneados: $counter ===" -Fo
 # 4. Resumo Final (Avisos de Certo / Não Certo)
 Write-Host "`n--- RESULTADO FINAL ---" -ForegroundColor Cyan
 
-foreach ($num in $numeros) {
-    $qdt = $encontrados[$num].Count
+foreach ($termo in $termos) {
+    $qdt = $encontrados[$termo].Count
     if ($qdt -gt 0) {
         # QUANDO DER CERTO
-        Write-Host "SUCESSO: O número '$num' foi encontrado em $qdt item(ns)." -ForegroundColor Green
+        Write-Host "SUCESSO: O número '$termo' foi encontrado em $qdt item(ns)." -ForegroundColor Green
     } else {
         # QUANDO NÃO DER CERTO / NÃO ENCONTRAR
-        Write-Host "NÃO ENCONTRADO: O número '$num' NÃO foi achado em lugar nenhum nesta pasta." -ForegroundColor Red
+        Write-Host "NÃO ENCONTRADO: O número '$termo' NÃO foi achado em lugar nenhum nesta pasta." -ForegroundColor Red
     }
 }
