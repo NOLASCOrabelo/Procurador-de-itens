@@ -134,7 +134,7 @@ while IFS= read -r file_path; do
             fi
         fi
     done
-done < <(find "$source_path" -type f -o -type d 2>/dev/null)
+done <<< "$(find "$source_path" \( -type f -o -type d \) 2>/dev/null)"
 
 echo ""
 echo -e "${CYAN}=== Busca concluída! Total de itens escaneados: $counter ===${NC}"
