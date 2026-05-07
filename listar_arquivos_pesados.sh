@@ -30,20 +30,46 @@ fi
 echo ""
 echo -e "${CYAN}Analisando arquivos em $source_path ...${NC}"
 echo -e "${YELLOW}Isso pode levar alguns minutos dependendo do tamanho do diretório...${NC}"
+echo -e "${YELLOW}Buscando recursivamente em todos os subdiretórios...${NC}"
 echo ""
 
-# 3. Buscar e ordenar arquivos por tamanho
-# Usar find + du para obter tamanhos, ordenar e pegar os maiores
+# 3. Criar arquivo temporário para armazenar resultados
+temp_file=$(mktemp)
+
+# Contador de progresso
+contador_progresso=0
+
+# Encontrar APENAS arquivos regulares recursivamente, ignorando:
+# - Dispositivos (/dev)
+# - Sockets
+# - Pipes
+# - Links simbólicos
+echo -e "${CYAN}Escaneando arquivos...${NC}"
+
+find "$source_path" -type f -printf "%s\t%p\n" 2>/dev/null | \
+    while IFS=$'\t' read -r tamanho caminho; do
+        # Mostrar progresso a cada 1000 arquivos
+        ((contador_progresso++))
+        if (( contador_progresso % 1000 == 0 )); then
+            echo -e "${YELLOW}Processados: $contador_progresso arquivos...${NC}" >&2
+        fi
+        
+        # Escrever no arquivo temporário
+        echo -e "$tamanho\t$caminho" >> "$temp_file"
+    done
+
+echo -e "${GREEN}Escaneamento concluído! Total de arquivos encontrados: $contador_progresso${NC}"
+echo ""
+
+# Ordenar por tamanho (maior primeiro) e pegar os N maiores
 echo -e "${CYAN}=== TOP $quantidade ARQUIVOS MAIS PESADOS ===${NC}"
 echo ""
 
 contador=1
 tamanho_total=0
 
-# Encontrar arquivos, obter tamanho em bytes, ordenar e pegar os N maiores
-find "$source_path" -type f -exec du -b {} + 2>/dev/null | \
-    sort -rn | \
-    head -n "$quantidade" | \
+# Ordenar e processar os maiores arquivos
+sort -rn "$temp_file" | head -n "$quantidade" | \
     while IFS=$'\t' read -r tamanho caminho; do
         # Calcular tamanhos em MB e GB
         tamanho_mb=$(echo "scale=2; $tamanho / 1048576" | bc)
@@ -62,6 +88,9 @@ find "$source_path" -type f -exec du -b {} + 2>/dev/null | \
         tamanho_total=$((tamanho_total + tamanho))
         contador=$((contador + 1))
     done
+
+# Remover arquivo temporário
+rm -f "$temp_file"
 
 echo ""
 echo -e "${CYAN}=== RESUMO ===${NC}"

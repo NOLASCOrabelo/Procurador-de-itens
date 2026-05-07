@@ -18,12 +18,32 @@ if ([string]::IsNullOrWhiteSpace($quantidade) -or $quantidade -notmatch '^\d+$')
 Write-Host ""
 Write-Host "Analisando arquivos em $source_path ..." -ForegroundColor Cyan
 Write-Host "Isso pode levar alguns minutos dependendo do tamanho do diretório..." -ForegroundColor Yellow
+Write-Host "Buscando recursivamente em todos os subdiretórios..." -ForegroundColor Yellow
 Write-Host ""
 
 # 3. Buscar e ordenar arquivos por tamanho
-$arquivos = Get-ChildItem -Path $source_path -File -Recurse -ErrorAction SilentlyContinue | 
-    Sort-Object Length -Descending | 
-    Select-Object -First $quantidade
+Write-Host "Escaneando arquivos..." -ForegroundColor Cyan
+
+$contador_progresso = 0
+$arquivos = @()
+
+# Buscar recursivamente TODOS os arquivos
+Get-ChildItem -Path $source_path -File -Recurse -Force -ErrorAction SilentlyContinue | ForEach-Object {
+    $contador_progresso++
+    
+    # Mostrar progresso a cada 1000 arquivos
+    if ($contador_progresso % 1000 -eq 0) {
+        Write-Host "Processados: $contador_progresso arquivos..." -ForegroundColor Yellow
+    }
+    
+    $arquivos += $_
+}
+
+Write-Host "Escaneamento concluído! Total de arquivos encontrados: $contador_progresso" -ForegroundColor Green
+Write-Host ""
+
+# Ordenar por tamanho e pegar os N maiores
+$arquivos = $arquivos | Sort-Object Length -Descending | Select-Object -First $quantidade
 
 # 4. Exibir resultados
 Write-Host "=== TOP $quantidade ARQUIVOS MAIS PESADOS ===" -ForegroundColor Cyan
