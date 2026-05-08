@@ -1,0 +1,80 @@
+═══════════════════════════════════════════════════════════════
+  COMO EXECUTAR OS SCRIPTS POWERSHELL CORRETAMENTE
+═══════════════════════════════════════════════════════════════
+
+ERRO COMUM:
+-----------
+❌ descobrir_anydesk.ps1
+   Erro: "The term 'descobrir_anydesk.ps1' is not recognized..."
+
+SOLUÇÃO:
+--------
+✅ .\descobrir_anydesk.ps1
+   (Note o ".\" antes do nome do arquivo)
+
+
+═══════════════════════════════════════════════════════════════
+  PASSO A PASSO PARA EXECUTAR
+═══════════════════════════════════════════════════════════════
+
+1. ABRIR POWERSHELL COMO ADMINISTRADOR
+   - Clique com botão direito no ícone do PowerShell
+   - Selecione "Executar como Administrador"
+
+2. NAVEGAR ATÉ A PASTA DO SCRIPT
+   cd "C:\Users\Thiago\Desktop\Nolasco\Agents\Procurador de item"
+
+3. PERMITIR EXECUÇÃO DE SCRIPTS (se necessário)
+   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+4. EXECUTAR O SCRIPT
+   .\descobrir_anydesk_CORRIGIDO.ps1
+
+
+═══════════════════════════════════════════════════════════════
+  SCRIPTS DISPONÍVEIS
+═══════════════════════════════════════════════════════════════
+
+WINDOWS (PowerShell):
+---------------------
+.\procurar_itens.ps1                    - Procurar arquivos por texto
+.\listar_arquivos_pesados.ps1           - Listar arquivos mais pesados
+.\descobrir_anydesk_CORRIGIDO.ps1       - Descobrir AnyDesks na rede
+
+LINUX/MAC (Bash):
+-----------------
+./procurar_itens.sh                     - Procurar arquivos por texto
+./listar_arquivos_pesados.sh            - Listar arquivos mais pesados
+./listar_arquivos_pesados_v2.sh         - Versão melhorada
+./descobrir_anydesk.sh                  - Descobrir AnyDesks na rede
+
+
+═══════════════════════════════════════════════════════════════
+  TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════
+
+PROBLEMA: "Execution Policy"
+SOLUÇÃO:
+  Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
+
+PROBLEMA: "Missing closing '}'"
+SOLUÇÃO:
+  Use o arquivo descobrir_anydesk_CORRIGIDO.ps1
+
+PROBLEMA: Script não encontra AnyDesks
+SOLUÇÃO:
+  - Verifique se o firewall permite conexões na porta 7070
+  - Execute como Administrador
+  - Verifique se há AnyDesks ativos na rede
+
+
+═══════════════════════════════════════════════════════════════
+  DICAS
+═══════════════════════════════════════════════════════════════
+
+✓ Sempre use ".\" antes do nome do script no PowerShell
+✓ Execute como Administrador para melhores resultados
+✓ Para Linux/Mac, torne o script executável: chmod +x script.sh
+✓ Os resultados são salvos automaticamente em arquivos .txt
+
+═══════════════════════════════════════════════════════════════
