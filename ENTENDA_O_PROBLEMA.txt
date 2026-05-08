@@ -1,0 +1,152 @@
+═══════════════════════════════════════════════════════════════
+  POR QUE OS IDs ESTAVAM ERRADOS?
+═══════════════════════════════════════════════════════════════
+
+PROBLEMA IDENTIFICADO:
+----------------------
+O script anterior estava mostrando NÚMEROS ALEATÓRIOS (456732, 458922, etc.)
+que NÃO são IDs do AnyDesk.
+
+Esses números eram:
+  ❌ Números de porta
+  ❌ IDs de processo
+  ❌ Dados aleatórios da conexão TCP
+
+ID REAL DO ANYDESK:
+-------------------
+Um ID válido do AnyDesk tem 9 DÍGITOS:
+  ✓ Exemplo: 1 861 952 576
+  ✓ Formato: X XXX XXX XXX (com espaços)
+  ✓ Sem espaços: 1861952576
+
+
+═══════════════════════════════════════════════════════════════
+  SOLUÇÃO IMPLEMENTADA
+═══════════════════════════════════════════════════════════════
+
+NOVO SCRIPT: descobrir_anydesk_REAL.ps1
+----------------------------------------
+Este script agora:
+
+1. DETECTA a porta 7070 (AnyDesk ativo)
+2. TENTA OBTER o ID real do arquivo de configuração
+3. FORMATA o ID corretamente (com espaços)
+
+
+═══════════════════════════════════════════════════════════════
+  LIMITAÇÃO IMPORTANTE
+═══════════════════════════════════════════════════════════════
+
+OBTER IDs REMOTOS É DIFÍCIL!
+-----------------------------
+Para obter o ID de uma máquina remota, você precisa:
+
+  1. ACESSO ADMINISTRATIVO à máquina remota
+  2. POWERSHELL REMOTING habilitado (Enable-PSRemoting)
+  3. OU acesso físico/RDP à máquina
+
+POR QUÊ?
+--------
+O ID do AnyDesk fica em um ARQUIVO LOCAL:
+  Windows: %APPDATA%\AnyDesk\service.conf
+  Linux: ~/.anydesk/service.conf
+
+Não é possível ler este arquivo remotamente sem permissões especiais.
+
+
+═══════════════════════════════════════════════════════════════
+  SCRIPTS DISPONÍVEIS
+═══════════════════════════════════════════════════════════════
+
+1. descobrir_anydesk_REAL.ps1
+   - Escaneia a rede
+   - Detecta AnyDesks ativos (porta 7070)
+   - TENTA obter IDs remotos (se tiver credenciais)
+   - Mostra quais máquinas têm AnyDesk
+
+2. obter_id_anydesk.ps1
+   - Obtém o ID do AnyDesk LOCAL
+   - Mostra o ID formatado corretamente
+   - Útil para verificar o ID da sua própria máquina
+
+
+═══════════════════════════════════════════════════════════════
+  COMO USAR
+═══════════════════════════════════════════════════════════════
+
+OPÇÃO 1: Escanear a rede (detectar quais têm AnyDesk)
+------------------------------------------------------
+.\descobrir_anydesk_REAL.ps1
+
+Resultado:
+  - Lista de IPs com AnyDesk ativo
+  - Hostnames das máquinas
+  - IDs (se conseguir obter)
+
+
+OPÇÃO 2: Obter ID local
+------------------------
+.\obter_id_anydesk.ps1
+
+Resultado:
+  - ID do AnyDesk da sua máquina
+  - Formatado corretamente (X XXX XXX XXX)
+
+
+═══════════════════════════════════════════════════════════════
+  WORKFLOW RECOMENDADO
+═══════════════════════════════════════════════════════════════
+
+PASSO 1: Descobrir quais máquinas têm AnyDesk
+----------------------------------------------
+.\descobrir_anydesk_REAL.ps1
+
+Isso vai mostrar:
+  IP: 192.168.1.100
+  Hostname: PC-ESCRITORIO
+  AnyDesk ID: Não acessível
+
+PASSO 2: Acessar cada máquina individualmente
+----------------------------------------------
+Para cada máquina encontrada:
+  a) Conectar via RDP ou fisicamente
+  b) Executar: .\obter_id_anydesk.ps1
+  c) Anotar o ID mostrado
+
+
+═══════════════════════════════════════════════════════════════
+  ALTERNATIVA: PowerShell Remoting
+═══════════════════════════════════════════════════════════════
+
+Se você tem acesso administrativo a todas as máquinas:
+
+PASSO 1: Habilitar PS Remoting em cada máquina
+-----------------------------------------------
+Em cada máquina remota, executar:
+  Enable-PSRemoting -Force
+
+PASSO 2: Executar o script com credenciais
+-------------------------------------------
+.\descobrir_anydesk_REAL.ps1
+
+Quando perguntado:
+  "Tentar obter IDs remotos? (S/N)": S
+  "Usuario": DOMINIO\admin (ou admin)
+  "Senha": sua_senha
+
+Agora o script VAI CONSEGUIR obter os IDs remotos!
+
+
+═══════════════════════════════════════════════════════════════
+  RESUMO
+═══════════════════════════════════════════════════════════════
+
+✓ Script DETECTA AnyDesks na rede (porta 7070)
+✓ Script TENTA obter IDs (se tiver permissão)
+✗ Sem permissões, IDs aparecem como "Não acessível"
+
+SOLUÇÃO:
+  - Acesse cada máquina individualmente, OU
+  - Habilite PowerShell Remoting em todas as máquinas
+
+═══════════════════════════════════════════════════════════════
