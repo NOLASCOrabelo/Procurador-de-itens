@@ -1,0 +1,253 @@
+═══════════════════════════════════════════════════════════════
+  GUIA: DESCOBRIR ANYDESK E RDP NA REDE
+═══════════════════════════════════════════════════════════════
+
+DIFERENÇA ENTRE AS PORTAS:
+---------------------------
+Porta 7070 (AnyDesk)  → Software de acesso remoto instalado
+Porta 3389 (RDP)      → Remote Desktop Protocol (Windows nativo)
+
+
+═══════════════════════════════════════════════════════════════
+  NOVO SCRIPT: descobrir_anydesk_e_rdp.ps1
+═══════════════════════════════════════════════════════════════
+
+COMO EXECUTAR:
+--------------
+1. Abra PowerShell como Administrador
+2. Navegue até a pasta:
+   cd "C:\Users\Thiago\Desktop\Nolasco\Agents\Procurador de item"
+3. Execute:
+   .\descobrir_anydesk_e_rdp.ps1
+
+
+O QUE O SCRIPT FAZ:
+-------------------
+✓ Verifica AnyDesk local (seu PC)
+✓ Escaneia a rede procurando:
+  - Porta 7070 (AnyDesk)
+  - Porta 3389 (RDP)
+✓ Mostra quais máquinas têm cada serviço
+✓ Fornece comandos prontos para conectar
+
+
+═══════════════════════════════════════════════════════════════
+  EXEMPLO DE RESULTADO
+═══════════════════════════════════════════════════════════════
+
+IP              Hostname                AnyDesk  RDP  ComoConectar
+--              --------                -------  ---  ------------
+172.21.32.1     MediaPortal.mshome.net  Sim      Nao  Precisa do ID
+192.168.1.100   PC-ESCRITORIO           Nao      Sim  mstsc /v:192.168.1.100
+192.168.1.150   SERVIDOR-01             Sim      Sim  mstsc /v:192.168.1.150
+
+
+═══════════════════════════════════════════════════════════════
+  COMO CONECTAR VIA RDP
+═══════════════════════════════════════════════════════════════
+
+MÉTODO 1: Linha de comando
+---------------------------
+1. Pressione Win + R
+2. Digite: mstsc /v:IP_DA_MAQUINA
+3. Exemplo: mstsc /v:192.168.1.100
+4. Clique OK
+5. Digite usuário e senha
+
+
+MÉTODO 2: Interface gráfica
+----------------------------
+1. Pressione Win + R
+2. Digite: mstsc
+3. Clique OK
+4. Na janela que abrir:
+   - Campo "Computador": Digite o IP (ex: 192.168.1.100)
+   - Clique "Conectar"
+5. Digite usuário e senha
+
+
+MÉTODO 3: Menu Iniciar
+-----------------------
+1. Menu Iniciar
+2. Procure: "Conexão de Área de Trabalho Remota"
+3. Digite o IP da máquina
+4. Clique "Conectar"
+
+
+═══════════════════════════════════════════════════════════════
+  COMO CONECTAR VIA ANYDESK
+═══════════════════════════════════════════════════════════════
+
+PROBLEMA:
+---------
+Para conectar via AnyDesk, você precisa do ID de 9 dígitos.
+Exemplo: 1 861 952 576
+
+
+SOLUÇÃO 1: Se a máquina tem RDP habilitado
+-------------------------------------------
+1. Conecte via RDP primeiro (veja acima)
+2. Na máquina remota, execute:
+   .\obter_id_anydesk.ps1
+3. Anote o ID mostrado
+4. No seu AnyDesk local, digite esse ID
+
+
+SOLUÇÃO 2: Se a máquina NÃO tem RDP
+------------------------------------
+Você precisa de acesso físico à máquina:
+1. Vá até a máquina fisicamente
+2. Execute: .\obter_id_anydesk.ps1
+3. Anote o ID
+4. Volte ao seu PC e use o ID no AnyDesk
+
+
+SOLUÇÃO 3: PowerShell Remoting (avançado)
+------------------------------------------
+Se você tem credenciais de administrador:
+1. Na máquina remota, habilite PS Remoting:
+   Enable-PSRemoting -Force
+2. Use o script: .\descobrir_anydesk_REAL.ps1
+3. Forneça credenciais quando solicitado
+
+
+═══════════════════════════════════════════════════════════════
+  CENÁRIOS COMUNS
+═══════════════════════════════════════════════════════════════
+
+CENÁRIO 1: Máquina tem RDP e AnyDesk
+-------------------------------------
+✓ Melhor opção: Use RDP (mais rápido e nativo do Windows)
+✓ Comando: mstsc /v:IP_DA_MAQUINA
+✓ Depois, se precisar do ID do AnyDesk, execute .\obter_id_anydesk.ps1
+
+
+CENÁRIO 2: Máquina tem APENAS AnyDesk
+--------------------------------------
+✗ Problema: Precisa do ID para conectar
+✓ Solução: Acesso físico ou PowerShell Remoting
+
+
+CENÁRIO 3: Máquina tem APENAS RDP
+----------------------------------
+✓ Solução: Use RDP normalmente
+✓ Comando: mstsc /v:IP_DA_MAQUINA
+
+
+CENÁRIO 4: Máquina não tem nenhum dos dois
+-------------------------------------------
+✗ Não é possível acesso remoto
+✓ Solução: Acesso físico necessário
+
+
+═══════════════════════════════════════════════════════════════
+  TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════
+
+PROBLEMA: RDP não conecta
+--------------------------
+Possíveis causas:
+  ❌ Firewall bloqueando porta 3389
+  ❌ RDP desabilitado nas configurações do Windows
+  ❌ Credenciais incorretas
+  ❌ Usuário não tem permissão de acesso remoto
+
+Solução:
+  1. Verifique se o usuário está no grupo "Usuários de Área de Trabalho Remota"
+  2. Verifique firewall da máquina remota
+  3. Confirme que RDP está habilitado:
+     Painel de Controle > Sistema > Configurações Remotas
+
+
+PROBLEMA: AnyDesk detectado mas não consigo conectar
+-----------------------------------------------------
+Possíveis causas:
+  ❌ Não tem o ID correto
+  ❌ AnyDesk na máquina remota está com senha
+  ❌ Acesso não supervisionado não configurado
+
+Solução:
+  1. Obtenha o ID correto (9 dígitos)
+  2. Se pedir senha, você precisa saber a senha configurada
+  3. Configure acesso não supervisionado na máquina remota
+
+
+PROBLEMA: Script não encontra nenhuma máquina
+----------------------------------------------
+Possíveis causas:
+  ❌ Firewall bloqueando scan de portas
+  ❌ Máquinas em subnet diferente
+  ❌ Timeout muito curto
+
+Solução:
+  1. Execute como Administrador
+  2. Verifique se está na mesma rede
+  3. Desabilite temporariamente o firewall para teste
+
+
+═══════════════════════════════════════════════════════════════
+  RESUMO DOS SCRIPTS DISPONÍVEIS
+═══════════════════════════════════════════════════════════════
+
+1. descobrir_anydesk_e_rdp.ps1 (NOVO - RECOMENDADO)
+   → Verifica AnyDesk E RDP
+   → Mostra como conectar em cada um
+   → Gera relatório completo
+
+2. descobrir_anydesk_REAL.ps1
+   → Tenta obter IDs reais do AnyDesk
+   → Requer PowerShell Remoting ou credenciais
+
+3. descobrir_anydesk_SIMPLES.ps1
+   → Apenas detecta AnyDesk (porta 7070)
+   → Não obtém IDs
+
+4. obter_id_anydesk.ps1
+   → Obtém ID do AnyDesk LOCAL
+   → Execute na máquina que você quer o ID
+
+
+═══════════════════════════════════════════════════════════════
+  WORKFLOW RECOMENDADO
+═══════════════════════════════════════════════════════════════
+
+PASSO 1: Descobrir máquinas
+----------------------------
+.\descobrir_anydesk_e_rdp.ps1
+
+Resultado: Lista de IPs com AnyDesk e/ou RDP
+
+
+PASSO 2: Conectar via RDP (se disponível)
+------------------------------------------
+mstsc /v:IP_DA_MAQUINA
+
+Digite usuário e senha
+
+
+PASSO 3: Obter ID do AnyDesk (se necessário)
+---------------------------------------------
+Na máquina remota (via RDP):
+.\obter_id_anydesk.ps1
+
+Anote o ID
+
+
+PASSO 4: Usar AnyDesk (se RDP não disponível)
+----------------------------------------------
+No seu AnyDesk local:
+Digite o ID obtido no Passo 3
+
+
+═══════════════════════════════════════════════════════════════
+  DICAS DE SEGURANÇA
+═══════════════════════════════════════════════════════════════
+
+✓ Use senhas fortes para RDP
+✓ Configure acesso não supervisionado no AnyDesk com senha
+✓ Mantenha logs de acesso
+✓ Use VPN quando acessar de fora da rede local
+✓ Desabilite RDP quando não estiver em uso
+✓ Configure firewall para permitir apenas IPs confiáveis
+
+═══════════════════════════════════════════════════════════════
