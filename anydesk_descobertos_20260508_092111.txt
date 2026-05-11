@@ -1,6 +1,0 @@
-﻿
-IP          Hostname              
---          --------              
-172.21.32.1 MediaPortal.mshome.net
-
-
