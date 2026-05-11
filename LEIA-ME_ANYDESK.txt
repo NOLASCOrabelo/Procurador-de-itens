@@ -18,7 +18,7 @@ PROBLEMA RESOLVIDO!
    - "Executar como Administrador"
 
 2. NAVEGAR ATÉ A PASTA
-   cd "C:\Users\Thiago\Desktop\Nolasco\Agents\Procurador de item"
+   cd "CAMINHO_DA_PASTA_DO_SCRIPT"
 
 3. EXECUTAR O SCRIPT
    .\descobrir_anydesk_SIMPLES.ps1

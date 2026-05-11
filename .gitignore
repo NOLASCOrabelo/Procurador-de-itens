@@ -1,0 +1,19 @@
+# Arquivos da lixeira do Windows
+$RECYCLE.BIN/
+$I*/
+$R*/
+
+# Arquivos temporários do Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Arquivos de sistema
+*.tmp
+*.temp
+~$*
+
+# Resultados de testes e relatórios temporários
+dispositivos_encontrados_*.txt
+anydesk_ids_*.txt
+anydesk_descobertos_*.txt

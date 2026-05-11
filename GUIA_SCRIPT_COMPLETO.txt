@@ -30,7 +30,7 @@ Ou com espaços:
 PASSO 3: Digite a pasta onde procurar
 --------------------------------------
 Digite o caminho completo da pasta onde deseja procurar:
-> C:\Users\Thiago\Desktop\BAIXAS
+> C:\Pasta\Origem
 
 
 PASSO 4: Aguarde a busca
@@ -52,7 +52,7 @@ Deseja mover esses X arquivos irrelevantes para outra pasta? (S/N):
 PASSO 6: Digite a pasta destino
 --------------------------------
 Digite o caminho da pasta DESTINO (para onde mover os irrelevantes):
-> C:\Users\Thiago\Desktop\Upscale
+> C:\Pasta\Destino
 
 
 PASSO 7: Confirme a operação
@@ -84,9 +84,9 @@ Este script procura itens relevantes e move os irrelevantes para outra pasta.
 Digite os termos que deseja procurar: 456728, 456729, 456730
 Termos a procurar: 456728, 456729, 456730
 
-Digite o caminho completo da pasta: C:\Users\Thiago\Desktop\BAIXAS
+Digite o caminho completo da pasta: C:\Pasta\Origem
 
-Iniciando a busca em C:\Users\Thiago\Desktop\BAIXAS ...
+Iniciando a busca em C:\Pasta\Origem ...
 Total de arquivos na pasta: 77
 
  -> ENCONTRADO! Termo '456728' no arquivo: 456728.mp4

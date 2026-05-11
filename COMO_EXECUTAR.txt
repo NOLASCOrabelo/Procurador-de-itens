@@ -22,7 +22,7 @@ SOLUÇÃO:
    - Selecione "Executar como Administrador"
 
 2. NAVEGAR ATÉ A PASTA DO SCRIPT
-   cd "C:\Users\Thiago\Desktop\Nolasco\Agents\Procurador de item"
+   cd "CAMINHO_DA_PASTA_DO_SCRIPT"
 
 3. PERMITIR EXECUÇÃO DE SCRIPTS (se necessário)
    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
