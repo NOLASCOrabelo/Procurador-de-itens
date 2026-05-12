@@ -1,6 +1,0 @@
-﻿
-IP          Hostname               AnyDeskID    
---          --------               ---------    
-172.21.32.1 MediaPortal.mshome.net Nao acessivel
-
-
