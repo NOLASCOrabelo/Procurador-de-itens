@@ -5,11 +5,9 @@ Coleção de scripts PowerShell e Bash para buscar, organizar e gerenciar arquiv
 ## 📋 Índice
 
 - [Sobre](#sobre)
-- [Funcionalidades](#funcionalidades)
 - [Scripts Disponíveis](#scripts-disponíveis)
 - [Instalação](#instalação)
-- [Uso](#uso)
-- [Exemplos](#exemplos)
+- [Exemplos de Uso](#exemplos-de-uso)
 - [Requisitos](#requisitos)
 - [Contribuindo](#contribuindo)
 - [Licença](#licença)
@@ -42,7 +40,7 @@ Este repositório contém ferramentas desenvolvidas para facilitar a busca e org
 - Confirmação em cada etapa
 
 ### 🌐 Descoberta de Rede
-- Detecta dispositivos com AnyDesk ativo
+- Detecta dispositivos com AnyDesk ativo (porta 7070)
 - Verifica portas RDP (3389) abertas
 - Resolve hostnames automaticamente
 - Gera relatórios de dispositivos encontrados
@@ -60,7 +58,7 @@ Este repositório contém ferramentas desenvolvidas para facilitar a busca e org
 ### 🔍 Busca e Organização
 
 #### `procurar_e_mover_irrelevantes.ps1` ⭐ **RECOMENDADO**
-Script completo que combina busca e organização em uma única execução.
+Script completo que combina busca e organização em uma única execução. Procura termos nos títulos dos arquivos de uma pasta, identifica quais são relevantes e quais não são, e move os irrelevantes para outra pasta.
 
 **Uso:**
 ```powershell
@@ -68,15 +66,16 @@ Script completo que combina busca e organização em uma única execução.
 ```
 
 **Funcionalidades:**
-- Busca arquivos por termos específicos
+- Busca arquivos por termos específicos (apenas nível 1 da pasta)
 - Identifica arquivos relevantes e irrelevantes
-- Move irrelevantes para pasta de destino
+- Preview dos arquivos a mover antes de executar
+- Confirmação em cada etapa
 - Relatório completo ao final
 
 ---
 
 #### `procurar_itens.ps1`
-Busca arquivos que contêm termos específicos no título.
+Busca arquivos que contêm termos específicos no título. Usa `dir /s /b` nativamente para performance máxima em grandes volumes.
 
 **Uso:**
 ```powershell
@@ -92,7 +91,7 @@ Digite o caminho: C:\Documentos
 ---
 
 #### `procurar_itens.sh`
-Versão Bash do script de busca para Linux/Mac.
+Versão Bash do script de busca para Linux/Mac. Funcionalidade equivalente ao `procurar_itens.ps1`.
 
 **Uso:**
 ```bash
@@ -103,7 +102,7 @@ chmod +x procurar_itens.sh
 ---
 
 #### `mover_itens_nao_encontrados.ps1`
-Move arquivos que NÃO contêm os termos especificados.
+Move arquivos que NÃO contêm os termos especificados. Interativo: pede pasta de origem, pasta de destino e termos relevantes.
 
 **Uso:**
 ```powershell
@@ -113,61 +112,50 @@ Move arquivos que NÃO contêm os termos especificados.
 ---
 
 #### `mover_itens_nao_encontrados_rapido.ps1`
-Versão rápida com suporte a parâmetros.
+Versão rápida com suporte a parâmetros diretos na linha de comando. Também funciona de forma interativa se nenhum parâmetro for passado.
 
-**Uso:**
+**Uso com parâmetros:**
 ```powershell
 .\mover_itens_nao_encontrados_rapido.ps1 -PastaOrigem "C:\Origem" -PastaDestino "C:\Destino" -Termos "termo1","termo2"
+```
+
+**Uso interativo:**
+```powershell
+.\mover_itens_nao_encontrados_rapido.ps1
 ```
 
 ---
 
 ### 🌐 Descoberta de Rede
 
-#### `descobrir_anydesk_e_rdp_rapido.ps1` ⭐ **RECOMENDADO**
-Descobre dispositivos com AnyDesk e/ou RDP na rede local.
+#### `descobrir_anydesk_e_rdp_rapido.ps1`
+Escaneia a rede local para descobrir dispositivos com AnyDesk (porta 7070) e/ou RDP (porta 3389) ativos. Também obtém o ID do AnyDesk da máquina local.
 
 **Uso:**
 ```powershell
-.\descobrir_anydesk_e_rdp_rapido.ps1 -RedeBase "192.168.1"
+.\descobrir_anydesk_e_rdp_rapido.ps1 -RedeBase "192.168.15"
 ```
+
+**Parâmetros:**
+| Parâmetro | Padrão | Descrição |
+|-----------|--------|-----------|
+| `-RedeBase` | `192.168.15` | Base da rede a escanear |
+| `-InicioIP` | `1` | IP inicial do range |
+| `-FimIP` | `254` | IP final do range |
 
 **Funcionalidades:**
-- Detecta porta 7070 (AnyDesk)
-- Detecta porta 3389 (RDP)
-- Resolve hostnames
+- Detecta porta 7070 (AnyDesk) e 3389 (RDP)
+- Resolve hostnames automaticamente
+- Obtém ID do AnyDesk local
 - Gera relatório com instruções de conexão
-
----
-
-#### `descobrir_anydesk_REAL.ps1`
-Tenta obter IDs reais do AnyDesk via PowerShell Remoting.
-
-**Uso:**
-```powershell
-.\descobrir_anydesk_REAL.ps1
-```
-
-**Requer:**
-- Credenciais de administrador
-- PowerShell Remoting habilitado nas máquinas remotas
-
----
-
-#### `obter_id_anydesk.ps1`
-Obtém o ID do AnyDesk da máquina local.
-
-**Uso:**
-```powershell
-.\obter_id_anydesk.ps1
-```
+- Salva resultados em arquivo `.txt`
 
 ---
 
 ### 💾 Análise de Disco
 
 #### `listar_arquivos_pesados.ps1`
-Lista os arquivos mais pesados em um diretório (Windows).
+Lista os arquivos mais pesados em um diretório (Windows). Busca recursiva com progresso em tempo real.
 
 **Uso:**
 ```powershell
@@ -176,19 +164,8 @@ Lista os arquivos mais pesados em um diretório (Windows).
 
 ---
 
-#### `listar_arquivos_pesados.sh`
-Versão Bash para Linux/Mac.
-
-**Uso:**
-```bash
-chmod +x listar_arquivos_pesados.sh
-./listar_arquivos_pesados.sh
-```
-
----
-
 #### `listar_arquivos_pesados_v2.sh`
-Versão melhorada com progresso detalhado.
+Versão Bash para Linux/Mac com progresso detalhado. Mostra o diretório sendo escaneado em tempo real.
 
 **Uso:**
 ```bash
@@ -204,8 +181,8 @@ chmod +x listar_arquivos_pesados_v2.sh
 
 1. Clone o repositório:
 ```powershell
-git clone https://github.com/seu-usuario/procurador-de-itens.git
-cd procurador-de-itens
+git clone https://github.com/NOLASCOrabelo/Procurador-de-itens.git
+cd Procurador-de-itens
 ```
 
 2. Permita execução de scripts (se necessário):
@@ -224,8 +201,8 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
 
 1. Clone o repositório:
 ```bash
-git clone https://github.com/seu-usuario/procurador-de-itens.git
-cd procurador-de-itens
+git clone https://github.com/NOLASCOrabelo/Procurador-de-itens.git
+cd Procurador-de-itens
 ```
 
 2. Dê permissão de execução:
@@ -240,7 +217,7 @@ chmod +x *.sh
 
 ---
 
-## 📖 Uso
+## 📖 Exemplos de Uso
 
 ### Exemplo 1: Buscar e Organizar Arquivos
 
@@ -293,9 +270,9 @@ mstsc /v:192.168.15.6
 Digite o caminho: /home/usuario/Downloads
 
 # Resultado:
-# 1. video.mp4 - 2.5 GB
-# 2. backup.zip - 1.8 GB
-# 3. filme.mkv - 1.2 GB
+# [1] 2.5 GB - /home/usuario/Downloads/video.mp4
+# [2] 1.8 GB - /home/usuario/Downloads/backup.zip
+# [3] 1.2 GB - /home/usuario/Downloads/filme.mkv
 ```
 
 ---
@@ -305,23 +282,11 @@ Digite o caminho: /home/usuario/Downloads
 ### Windows
 - Windows 10 ou superior
 - PowerShell 5.1 ou superior
-- Permissões de administrador (para alguns scripts)
+- Permissões de administrador (para o script de descoberta de rede)
 
 ### Linux/Mac
 - Bash 4.0 ou superior
-- Comandos padrão: `find`, `du`, `sort`
-
----
-
-## 📚 Documentação Adicional
-
-Cada script possui um guia detalhado de uso:
-
-- [`GUIA_SCRIPT_COMPLETO.txt`](GUIA_SCRIPT_COMPLETO.txt) - Guia do script completo de busca e organização
-- [`GUIA_MOVER_IRRELEVANTES.txt`](GUIA_MOVER_IRRELEVANTES.txt) - Guia de movimentação de arquivos
-- [`GUIA_ANYDESK_E_RDP.txt`](GUIA_ANYDESK_E_RDP.txt) - Guia de descoberta de rede
-- [`LEIA-ME_ANYDESK.txt`](LEIA-ME_ANYDESK.txt) - Informações sobre AnyDesk
-- [`ENTENDA_O_PROBLEMA.txt`](ENTENDA_O_PROBLEMA.txt) - Explicação sobre IDs do AnyDesk
+- Comandos padrão: `find`, `du`, `sort`, `bc`
 
 ---
 
@@ -342,7 +307,6 @@ Cada script possui um guia detalhado de uso:
 - **PowerShell** - Scripts para Windows
 - **Bash** - Scripts para Linux/Mac
 - **Git** - Controle de versão
-- **Markdown** - Documentação
 
 ---
 
@@ -358,24 +322,6 @@ Contribuições são bem-vindas! Para contribuir:
 
 ---
 
-## 📝 Changelog
-
-### [1.0.0] - 2026-05-11
-
-#### Adicionado
-- Script completo de busca e organização
-- Descoberta de dispositivos AnyDesk e RDP
-- Listagem de arquivos pesados
-- Suporte para Windows, Linux e Mac
-- Documentação completa
-
-#### Melhorado
-- Performance de busca em grandes volumes
-- Interface com confirmações e preview
-- Relatórios detalhados
-
----
-
 ## 📄 Licença
 
 Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
@@ -388,30 +334,12 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 ---
 
-## 🙏 Agradecimentos
-
-- Comunidade PowerShell
-- Comunidade Bash/Linux
-- Todos os contribuidores
-
----
-
 ## 📞 Suporte
 
 Se você encontrar algum problema ou tiver sugestões:
 
-1. Abra uma [Issue](https://github.com/seu-usuario/procurador-de-itens/issues)
-2. Consulte a [Documentação](docs/)
-3. Entre em contato
-
----
-
-## 🔗 Links Úteis
-
-- [Documentação PowerShell](https://docs.microsoft.com/powershell/)
-- [Guia Bash](https://www.gnu.org/software/bash/manual/)
-- [AnyDesk](https://anydesk.com/)
-- [Remote Desktop Protocol](https://docs.microsoft.com/windows-server/remote/remote-desktop-services/)
+1. Abra uma [Issue](https://github.com/NOLASCOrabelo/Procurador-de-itens/issues)
+2. Entre em contato
 
 ---
 
